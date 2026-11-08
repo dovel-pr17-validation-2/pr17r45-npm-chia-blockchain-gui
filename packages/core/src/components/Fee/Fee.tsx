@@ -1,0 +1,41 @@
+import { Trans } from '@lingui/macro';
+import { Box } from '@mui/material';
+import React from 'react';
+
+import { getStateColors } from '../../theme/semanticColors';
+import Amount, { AmountProps } from '../Amount';
+
+type FeeProps = AmountProps;
+
+export default function Fee({ label = <Trans>Fee</Trans>, name = 'fee', ...props }: FeeProps) {
+  return (
+    <Amount label={label} name={name} {...props}>
+      {({ value, mojo }) => {
+        const isHigh = mojo.gte('100000000000');
+        const isLow = mojo.gt('0') && mojo.lt('1');
+
+        if (!value) {
+          return <Trans>Recommended value: 0.000005</Trans>;
+        }
+
+        if (isHigh) {
+          return (
+            <Box sx={{ color: (theme) => getStateColors(theme.palette).warning }}>
+              <Trans>Value seems high</Trans>
+            </Box>
+          );
+        }
+
+        if (isLow) {
+          return (
+            <Box sx={{ color: (theme) => getStateColors(theme.palette).error }}>
+              <Trans>Incorrect value</Trans>
+            </Box>
+          );
+        }
+
+        return null;
+      }}
+    </Amount>
+  );
+}

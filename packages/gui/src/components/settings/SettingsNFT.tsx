@@ -1,0 +1,314 @@
+// import { usePrefs } from '@chia-network/api-react';
+import {
+  Flex,
+  SettingsHR,
+  SettingsSection,
+  SettingsText,
+  SettingsTitle,
+  // AlertDialog,
+  useOpenDialog,
+  FormatBytes,
+  ConfirmDialog,
+} from '@chia-network/core';
+import { Trans } from '@lingui/macro';
+import { Grid, Button, Switch, FormControlLabel, Typography } from '@mui/material';
+import React from 'react';
+
+import useAllowUnverifiedNFTPreviews from '../../hooks/useAllowUnverifiedNFTPreviews';
+import useCache from '../../hooks/useCache';
+import useHideObjectionableContent from '../../hooks/useHideObjectionableContent';
+import useIpfsGateway from '../../hooks/useIpfsGateway';
+import useNFTImageFittingMode from '../../hooks/useNFTImageFittingMode';
+import { useNFTVideoLoopGlobal } from '../../hooks/useNFTVideoLoop';
+import useShowNFTSource from '../../hooks/useShowNFTSource';
+
+import IpfsGatewayUrl from './IpfsGatewayUrl';
+import LimitCacheSize from './LimitCacheSize';
+
+/* todo it is deprecated we should remove it from users local storage
+Object.keys(localStorage).forEach((key) => {
+  if (key.indexOf('content-cache-') > -1) localStorage.removeItem(key);
+  if (key.indexOf('thumb-cache-') > -1) localStorage.removeItem(key);
+  if (key.indexOf('metadata-cache-') > -1) localStorage.removeItem(key);
+  if (key.indexOf('force-reload-') > -1) localStorage.removeItem(key);
+});
+*/
+
+export default function SettingsGeneral() {
+  const [hideObjectionableContent, setHideObjectionableContent] = useHideObjectionableContent();
+
+  function handleChangeHideObjectionableContent(event: React.ChangeEvent<HTMLInputElement>) {
+    setHideObjectionableContent(event.target.checked);
+  }
+
+  const { cacheSize, clearCache, cacheDirectory, setCacheDirectory } = useCache();
+  const [nftImageFittingMode, setNFTImageFittingMode] = useNFTImageFittingMode();
+  const [nftVideoLoop, setNFTVideoLoop] = useNFTVideoLoopGlobal();
+  const [ipfsGateway, setIpfsGateway] = useIpfsGateway();
+  const [allowUnverifiedPreviews, setAllowUnverifiedPreviews] = useAllowUnverifiedNFTPreviews();
+  const [showNFTSource, setShowNFTSource] = useShowNFTSource();
+  // const [, setCacheFolder] = usePrefs('cacheFolder', '');
+  const openDialog = useOpenDialog();
+
+  function handleScalePreviewImages(event: React.ChangeEvent<HTMLInputElement>) {
+    setNFTImageFittingMode(event.target.checked ? 'contain' : 'cover');
+  }
+
+  function handleChangeVideoLoop(event: React.ChangeEvent<HTMLInputElement>) {
+    setNFTVideoLoop(event.target.checked);
+  }
+
+  function handleChangeIpfsGateway(event: React.ChangeEvent<HTMLInputElement>) {
+    setIpfsGateway(event.target.checked);
+  }
+
+  function handleChangeAllowUnverifiedPreviews(event: React.ChangeEvent<HTMLInputElement>) {
+    setAllowUnverifiedPreviews(event.target.checked);
+  }
+
+  function handleChangeShowNFTSource(event: React.ChangeEvent<HTMLInputElement>) {
+    setShowNFTSource(event.target.checked);
+  }
+
+  async function clearNFTCache() {
+    openDialog(
+      <ConfirmDialog
+        title={<Trans>Clear NFT cache</Trans>}
+        confirmTitle={<Trans>Yes, delete</Trans>}
+        confirmColor="danger"
+        onConfirm={() => {
+          clearCache();
+        }}
+      >
+        <Trans>Are you sure you want to delete the NFT cache?</Trans>
+      </ConfirmDialog>,
+    );
+  }
+
+  async function chooseAnotherFolder() {
+    setCacheDirectory();
+  }
+
+  return (
+    <Grid container style={{ maxWidth: '624px' }} gap={3}>
+      <Grid item>
+        <Flex flexDirection="column" gap={1}>
+          <SettingsSection>
+            <Trans>NFT</Trans>
+          </SettingsSection>
+          <SettingsText>
+            <Trans>Choose what you want to see and how you want to view it.</Trans>
+          </SettingsText>
+        </Flex>
+      </Grid>
+
+      <Grid item xs={12} sm={12} lg={12}>
+        <SettingsHR />
+      </Grid>
+
+      <Grid container>
+        <Grid item style={{ width: '400px' }}>
+          <SettingsTitle>
+            <Trans>Hide objectionable content</Trans>
+          </SettingsTitle>
+        </Grid>
+        <Grid item container xs justifyContent="flex-end" marginTop="-6px">
+          <FormControlLabel
+            control={<Switch checked={hideObjectionableContent} onChange={handleChangeHideObjectionableContent} />}
+          />
+        </Grid>
+        <Grid item style={{ width: '400px' }}>
+          <SettingsText>
+            <Trans>
+              NFTs that have been categorized by the creator as objectionable content will be hidden by default.
+            </Trans>
+          </SettingsText>
+        </Grid>
+      </Grid>
+
+      <Grid container>
+        <Grid item style={{ width: '400px' }}>
+          <SettingsTitle>
+            <Trans>Fit images to cards</Trans>
+          </SettingsTitle>
+        </Grid>
+        <Grid item container xs justifyContent="flex-end" marginTop="-6px">
+          <FormControlLabel
+            control={<Switch checked={nftImageFittingMode === 'contain'} onChange={handleScalePreviewImages} />}
+          />
+        </Grid>
+        <Grid item style={{ width: '400px' }}>
+          <SettingsText>
+            <Trans>Images will be scaled to fill the NFT card and ignore their original proportions.</Trans>
+          </SettingsText>
+        </Grid>
+      </Grid>
+
+      <Grid container>
+        <Grid item style={{ width: '400px' }}>
+          <SettingsTitle>
+            <Trans>Loop videos</Trans>
+          </SettingsTitle>
+        </Grid>
+        <Grid item container xs justifyContent="flex-end" marginTop="-6px">
+          <FormControlLabel control={<Switch checked={nftVideoLoop} onChange={handleChangeVideoLoop} />} />
+        </Grid>
+        <Grid item style={{ width: '400px' }}>
+          <SettingsText>
+            <Trans>
+              All NFT videos will restart automatically when they finish playing. When disabled, looping can still be
+              turned on for individual videos from their detail page.
+            </Trans>
+          </SettingsText>
+        </Grid>
+      </Grid>
+
+      <Grid container>
+        <Grid item style={{ width: '400px' }}>
+          <SettingsTitle>
+            <Trans>Fetch IPFS content through a gateway</Trans>
+          </SettingsTitle>
+        </Grid>
+        <Grid item container xs justifyContent="flex-end" marginTop="-6px">
+          <FormControlLabel control={<Switch checked={ipfsGateway} onChange={handleChangeIpfsGateway} />} />
+        </Grid>
+        <Grid item style={{ width: '400px' }}>
+          <SettingsText>
+            <Trans>
+              NFT files published with ipfs:// addresses will be downloaded through an HTTPS gateway. The requested URL
+              differs from the address recorded on chain, but downloaded content is still verified against the NFT's
+              on-chain hash. The gateway operator can see your IP address and which NFT files you view. When disabled,
+              ipfs:// files are not fetched.
+            </Trans>
+          </SettingsText>
+        </Grid>
+      </Grid>
+
+      <Grid container>
+        <Grid item style={{ width: '400px' }}>
+          <SettingsTitle>
+            <Trans>IPFS gateway</Trans>
+          </SettingsTitle>
+        </Grid>
+        <Grid item xs={12} sx={{ marginTop: 1 }}>
+          <IpfsGatewayUrl disabled={!ipfsGateway} />
+        </Grid>
+        <Grid item style={{ width: '400px' }}>
+          <SettingsText>
+            <Trans>
+              The gateway used for ipfs:// addresses, and the fallback for gateway links (such as
+              https://nftstorage.link/ipfs/…) whose own host no longer serves them. Leave it empty to use the public
+              ipfs.io gateway, which is being wound down and rate limits applications; https://ipfs.mintgarden.io,
+              https://gateway.pinata.cloud and https://ipfs.filebase.io currently work, as does a local IPFS node such
+              as http://127.0.0.1:8080. Files are re-checked through the new gateway right away.
+            </Trans>
+          </SettingsText>
+        </Grid>
+      </Grid>
+
+      <Grid container>
+        <Grid item style={{ width: '400px' }}>
+          <SettingsTitle>
+            <Trans>Show where NFT files come from</Trans>
+          </SettingsTitle>
+        </Grid>
+        <Grid item container xs justifyContent="flex-end" marginTop="-6px">
+          <FormControlLabel control={<Switch checked={showNFTSource} onChange={handleChangeShowNFTSource} />} />
+        </Grid>
+        <Grid item style={{ width: '400px' }}>
+          <SettingsText>
+            <Trans>
+              Each NFT card gets a label saying whether the file it shows is IPFS content, and whether that content came
+              through the IPFS gateway above or directly from the host in the file's address. A file downloaded before
+              this option existed may be labeled as direct even when a gateway served it.
+            </Trans>
+          </SettingsText>
+        </Grid>
+      </Grid>
+
+      <Grid container>
+        <Grid item style={{ width: '400px' }}>
+          <SettingsTitle>
+            <Trans>Show unverified previews</Trans>
+          </SettingsTitle>
+        </Grid>
+        <Grid item container xs justifyContent="flex-end" marginTop="-6px">
+          <FormControlLabel
+            control={<Switch checked={allowUnverifiedPreviews} onChange={handleChangeAllowUnverifiedPreviews} />}
+          />
+        </Grid>
+        <Grid item style={{ width: '400px' }}>
+          <SettingsText>
+            <Trans>
+              When an NFT image is too large to verify against its on-chain hash, load the transaction confirmation
+              preview directly from its source URL without verification. When disabled, no preview is shown for these
+              NFTs.
+            </Trans>
+          </SettingsText>
+        </Grid>
+      </Grid>
+
+      <Grid item style={{ maxWidth: '400px' }}>
+        <Flex flexDirection="column" gap={1}>
+          <SettingsSection>
+            <Trans>Cache</Trans>
+          </SettingsSection>
+          <SettingsText>
+            <Trans>Manage how and where files are stored on this computer.</Trans>
+          </SettingsText>
+        </Flex>
+      </Grid>
+
+      <Grid item xs={12} sm={12} lg={12}>
+        <SettingsHR />
+      </Grid>
+
+      <Grid container>
+        <Grid item style={{ width: '400px' }}>
+          <SettingsTitle>
+            <Trans>Occupied space</Trans>
+          </SettingsTitle>
+        </Grid>
+        <Grid item container xs justifyContent="flex-end">
+          <Button onClick={clearNFTCache} color="primary" variant="outlined" size="small">
+            <Trans>Clear NFT cache</Trans>
+          </Button>
+        </Grid>
+        <Grid item style={{ width: '400px' }}>
+          <Typography variant="body2" fontWeight="500" component="div">
+            <FormatBytes value={cacheSize} precision={3} />
+          </Typography>
+        </Grid>
+      </Grid>
+
+      <Grid container>
+        <Grid item style={{ width: '400px' }}>
+          <SettingsTitle>
+            <Trans>Local folder</Trans>
+          </SettingsTitle>
+        </Grid>
+        <Grid item container xs justifyContent="flex-end">
+          <Button onClick={chooseAnotherFolder} color="primary" variant="outlined" size="small">
+            <Trans>Change</Trans>
+          </Button>
+        </Grid>
+        <Grid item style={{ width: '400px' }}>
+          <Typography variant="body2" fontWeight="500" component="div">
+            {cacheDirectory}
+          </Typography>
+        </Grid>
+      </Grid>
+
+      <Grid container>
+        <Grid item style={{ width: '400px' }}>
+          <SettingsTitle>
+            <Trans>Limit cache size</Trans>
+          </SettingsTitle>
+        </Grid>
+        <Grid item container xs justifyContent="flex-end">
+          <LimitCacheSize />
+        </Grid>
+      </Grid>
+    </Grid>
+  );
+}

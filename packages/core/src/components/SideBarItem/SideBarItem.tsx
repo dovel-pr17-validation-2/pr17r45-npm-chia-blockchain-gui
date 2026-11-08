@@ -1,0 +1,152 @@
+import { alpha, ListItem, ListItemIcon, Typography } from '@mui/material';
+import type { Theme } from '@mui/material/styles';
+import { styled } from '@mui/material/styles';
+import React, { type ReactNode } from 'react';
+import { useNavigate, useMatch } from 'react-router-dom';
+
+import getColorModeValue from '../../utils/useColorModeValue';
+import Flex from '../Flex';
+
+type SidebarPaletteKey =
+  | 'sidebarBackground'
+  | 'sidebarSelectedFill'
+  | 'sidebarIcon'
+  | 'sidebarIconSelected'
+  | 'sidebarIconHover'
+  | 'sidebarText';
+
+function paletteColor(theme: Theme, key: SidebarPaletteKey): string {
+  return getColorModeValue(theme, key as Parameters<typeof getColorModeValue>[1]);
+}
+
+function selectedFill(theme: Theme): string {
+  if (theme.palette.sidebarSelectedFill) {
+    return paletteColor(theme, 'sidebarSelectedFill');
+  }
+  // Never fall back to sidebarBackground: the drawer paper uses that token.
+  return alpha(theme.palette.primary.main, theme.palette.mode === 'dark' ? 0.22 : 0.16);
+}
+
+function labelColor(theme: Theme): string {
+  if (theme.palette.sidebarText) {
+    return paletteColor(theme, 'sidebarText');
+  }
+  return paletteColor(theme, 'sidebarIcon');
+}
+
+// Edge-bar mode: themes that set `sidebarMarkCurrent` mark the current row with a bar and fill on the row itself.
+function hasEdgeBar(theme: Theme): boolean {
+  return !!theme.palette.sidebarMarkCurrent;
+}
+
+const StyledListItemIcon = styled(ListItemIcon)<{ selected?: boolean }>`
+  min-width: auto;
+  position: relative;
+  background-color: ${({ theme, selected }) => (selected && !hasEdgeBar(theme) ? selectedFill(theme) : 'transparent')};
+  border-radius: ${({ theme }) => theme.spacing(1.25)};
+  width: ${({ theme }) => theme.spacing(5.25)};
+  height: ${({ theme }) => theme.spacing(5.25)};
+  border: ${({ selected, theme }) =>
+    selected && !hasEdgeBar(theme) ? `1px solid ${theme.palette.highlight.main}` : '1px solid transparent'};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    border-color 0.2s ease-in-out,
+    background-color 0.2s ease-in-out;
+
+  svg {
+    color: ${({ selected, theme }) =>
+      selected ? paletteColor(theme, 'sidebarIconSelected') : paletteColor(theme, 'sidebarIcon')};
+  }
+`;
+
+const StyledListItem = styled(ListItem, { shouldForwardProp: (prop) => prop !== '$selected' })<{
+  $selected?: boolean;
+}>`
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-left: 0;
+  padding-right: 0;
+  padding-top: ${({ theme }) => theme.spacing(0.5)};
+  padding-bottom: ${({ theme }) => theme.spacing(0.5)};
+
+  background-color: ${({ theme, $selected }) => ($selected && hasEdgeBar(theme) ? selectedFill(theme) : 'transparent')};
+
+  &::before {
+    content: '';
+    display: ${({ theme, $selected }) => ($selected && hasEdgeBar(theme) ? 'block' : 'none')};
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 3px;
+    background-color: ${({ theme }) => theme.palette.sidebarMarkCurrent};
+  }
+
+  &:hover {
+    background-color: ${({ theme, $selected }) =>
+      hasEdgeBar(theme) ? ($selected ? selectedFill(theme) : theme.palette.action.hover) : 'transparent'};
+  }
+
+  &:hover ${StyledListItemIcon} {
+    background-color: ${({ theme }) =>
+      hasEdgeBar(theme) ? 'transparent' : alpha(paletteColor(theme, 'sidebarIcon'), 0.12)};
+    border-color: ${({ theme }) =>
+      hasEdgeBar(theme) ? 'transparent' : alpha(paletteColor(theme, 'sidebarIconHover'), 0.55)};
+
+    svg {
+      color: ${({ theme, $selected }) =>
+        paletteColor(theme, $selected && hasEdgeBar(theme) ? 'sidebarIconSelected' : 'sidebarIconHover')} !important;
+    }
+  }
+`;
+
+const StyledListItemText = styled(Typography, { shouldForwardProp: (prop) => prop !== '$selected' })<{
+  $selected?: boolean;
+}>`
+  font-size: ${({ theme }) => theme.typography.pxToRem(9.5)} !important;
+  font-weight: 700;
+  color: ${({ theme, $selected }) => ($selected && hasEdgeBar(theme) ? theme.palette.text.primary : labelColor(theme))};
+`;
+
+export type SideBarItemProps = {
+  to: string;
+  title: ReactNode;
+  icon: any;
+  onSelect?: () => void;
+  end?: boolean;
+};
+
+export default function SideBarItem(props: SideBarItemProps) {
+  const { to, title, icon: Icon, end = false, onSelect, ...rest } = props;
+  const navigate = useNavigate();
+  const match = useMatch({
+    path: to,
+    end,
+  });
+
+  const isSelected = !!match;
+
+  async function handleClick() {
+    if (onSelect) {
+      await onSelect();
+    }
+    navigate(to);
+  }
+
+  return (
+    <StyledListItem button onClick={() => handleClick()} $selected={isSelected} {...rest}>
+      <Flex flexDirection="column" alignItems="center" gap={0.25}>
+        <StyledListItemIcon selected={isSelected}>
+          <Icon fontSize="sidebarIcon" />
+        </StyledListItemIcon>
+        <StyledListItemText align="center" $selected={isSelected}>
+          {title}
+        </StyledListItemText>
+      </Flex>
+    </StyledListItem>
+  );
+}
