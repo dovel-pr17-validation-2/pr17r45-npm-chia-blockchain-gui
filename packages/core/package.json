@@ -68,7 +68,7 @@
     "@chia-network/api-react": "1.0.0",
     "@chia-network/icons": "1.0.0",
     "@emotion/react": "11.11.1",
-    "@emotion/styled": "11.11.0",
+    "@emotion/styled": "11.14.1",
     "@lingui/cli": "4.11.4",
     "@lingui/core": "4.11.4",
     "@lingui/react": "4.11.4",
