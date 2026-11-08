@@ -43,7 +43,7 @@
     "@chia-network/core": "1.0.0",
     "@chia-network/icons": "1.0.0",
     "@chia-network/wallets": "1.0.0",
-    "@lingui/core": "4.11.4",
+    "@lingui/core": "6.11.0",
     "@lingui/macro": "4.11.4",
     "@lingui/react": "4.11.4",
     "@mui/icons-material": "5.14.3",
